@@ -5,6 +5,7 @@ A Flask-based webapp for generating beautiful map posters.
 
 import os
 import io
+import gc
 import json
 import time
 import uuid
@@ -20,6 +21,10 @@ import matplotlib.colors as mcolors
 import numpy as np
 
 app = Flask(__name__)
+
+# Memory optimization settings
+MAX_DISTANCE = 15000  # Limit max radius to 15km for memory
+LOW_MEMORY_MODE = os.environ.get('LOW_MEMORY', 'true').lower() == 'true'
 
 # Configuration
 THEMES_DIR = "themes"
@@ -209,26 +214,36 @@ def generate_poster(lat, lon, city_name, country_name, theme_name, distance, exp
     Returns:
         tuple: (bytes_io, mimetype, filename)
     """
+    # Memory optimization: limit distance
+    distance = min(distance, MAX_DISTANCE)
+
     theme = load_theme(theme_name)
     point = (lat, lon)
 
-    # Fetch map data
-    G = ox.graph_from_point(point, dist=distance, dist_type='bbox', network_type='all')
+    # Fetch map data - use simpler network type in low memory mode
+    network_type = 'drive' if LOW_MEMORY_MODE else 'all'
+    G = ox.graph_from_point(point, dist=distance, dist_type='bbox', network_type=network_type)
     time.sleep(0.3)
 
-    try:
-        water = ox.features_from_point(point, tags={'natural': 'water', 'waterway': 'riverbank'}, dist=distance)
-    except Exception:
-        water = None
-    time.sleep(0.2)
+    water = None
+    parks = None
 
-    try:
-        parks = ox.features_from_point(point, tags={'leisure': 'park', 'landuse': 'grass'}, dist=distance)
-    except Exception:
-        parks = None
+    # Skip water/parks in low memory mode to save RAM
+    if not LOW_MEMORY_MODE:
+        try:
+            water = ox.features_from_point(point, tags={'natural': 'water', 'waterway': 'riverbank'}, dist=distance)
+        except Exception:
+            water = None
+        time.sleep(0.2)
 
-    # Setup plot
-    fig, ax = plt.subplots(figsize=(12, 16), facecolor=theme['bg'])
+        try:
+            parks = ox.features_from_point(point, tags={'leisure': 'park', 'landuse': 'grass'}, dist=distance)
+        except Exception:
+            parks = None
+
+    # Setup plot - smaller figure in low memory mode
+    figsize = (10, 13) if LOW_MEMORY_MODE else (12, 16)
+    fig, ax = plt.subplots(figsize=figsize, facecolor=theme['bg'])
     ax.set_facecolor(theme['bg'])
     ax.set_position([0, 0, 1, 1])
 
@@ -296,14 +311,24 @@ def generate_poster(lat, lon, city_name, country_name, theme_name, distance, exp
         mimetype = 'image/svg+xml'
         filename = f"{city_slug}_{theme_name}_{timestamp}.svg"
     else:
-        dpi = 300  # High resolution
+        # Lower DPI in low memory mode (150 vs 300)
+        dpi = 150 if LOW_MEMORY_MODE else 300
         plt.savefig(buffer, format='png', dpi=dpi, facecolor=theme['bg'])
         mimetype = 'image/png'
         filename = f"{city_slug}_{theme_name}_{timestamp}.png"
 
     plt.close(fig)
-    buffer.seek(0)
+    plt.close('all')  # Close any remaining figures
 
+    # Memory cleanup
+    del G
+    if water is not None:
+        del water
+    if parks is not None:
+        del parks
+    gc.collect()
+
+    buffer.seek(0)
     return buffer, mimetype, filename
 
 

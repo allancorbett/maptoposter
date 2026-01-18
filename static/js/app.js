@@ -10,7 +10,7 @@ const state = {
     radiusCircle: null,
     selectedLocation: null,
     selectedTheme: 'feature_based',
-    distance: 10000,
+    distance: 8000,
     themes: []
 };
 
@@ -143,6 +143,11 @@ function bindEvents() {
     // Distance slider
     elements.distanceSlider.addEventListener('input', (e) => {
         state.distance = parseInt(e.target.value);
+        // Cap at 15km for memory-constrained hosting
+        if (state.distance > 15000) {
+            state.distance = 15000;
+            elements.distanceSlider.value = 15000;
+        }
         elements.distanceValue.textContent = (state.distance / 1000) + 'km';
         updateRadiusCircle();
     });

@@ -22,5 +22,5 @@ COPY . .
 ENV PORT=10000
 EXPOSE $PORT
 
-# Run with gunicorn (using shell form to expand $PORT)
-CMD gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+# Run with gunicorn (1 worker to save memory, preload for efficiency)
+CMD gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --preload
