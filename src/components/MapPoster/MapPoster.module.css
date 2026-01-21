@@ -1,0 +1,107 @@
+.container {
+  width: 420px;
+  height: 560px;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Hide MapLibre attribution */
+.map :global(.maplibregl-ctrl-attrib),
+.map :global(.maplibregl-ctrl-logo) {
+  display: none !important;
+}
+
+.gradientTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.gradientBottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px 20px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.cityName {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  letter-spacing: 12px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.countryName {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.divider {
+  width: 80px;
+  height: 1px;
+  margin-bottom: 8px;
+}
+
+.coordinates {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
+.attribution {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 7px;
+  opacity: 0.5;
+  z-index: 10;
+}
+
+@media (max-width: 900px) {
+  .container {
+    width: 280px;
+    height: 373px;
+  }
+
+  .cityName {
+    font-size: 24px;
+    letter-spacing: 8px;
+  }
+}
