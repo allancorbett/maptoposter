@@ -21,6 +21,7 @@ export interface MapPosterRef {
 export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
   function MapPoster({ location, themeId, onMapClick }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const theme = themes[themeId];
 
@@ -30,10 +31,10 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
 
     // Initialize map
     useEffect(() => {
-      if (!containerRef.current || mapRef.current) return;
+      if (!mapContainerRef.current || mapRef.current) return;
 
       const map = new maplibregl.Map({
-        container: 'map-container',
+        container: mapContainerRef.current,
         style: createMapStyle(theme),
         center: [0, 30],
         zoom: 1,
@@ -55,7 +56,7 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
         map.remove();
         mapRef.current = null;
       };
-    }, []);
+    }, [theme, onMapClick]);
 
     // Update map style when theme changes
     useEffect(() => {
@@ -83,7 +84,7 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
 
     return (
       <div className={styles.container} ref={containerRef}>
-        <div id="map-container" className={styles.map} />
+        <div ref={mapContainerRef} className={styles.map} />
         <div
           className={styles.gradientTop}
           style={{
