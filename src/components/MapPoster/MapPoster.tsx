@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
-import maplibregl from 'maplibre-gl';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useState } from 'react';
 import { themes, type ThemeId } from '@/lib/themes';
 import { createMapStyle } from '@/lib/mapStyle';
 import type { Location } from '@/lib/types';
@@ -21,8 +20,9 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
   function MapPoster({ location, themeId, onMapClick }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const mapContainerRef = useRef<HTMLDivElement>(null);
-    const mapRef = useRef<maplibregl.Map | null>(null);
+    const mapRef = useRef<unknown>(null);
     const onMapClickRef = useRef(onMapClick);
+    const [mapLoaded, setMapLoaded] = useState(false);
     const theme = themes[themeId];
 
     // Keep callback ref updated
@@ -34,49 +34,65 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
       getContainer: () => containerRef.current,
     }));
 
-    // Initialize map once on mount
+    // Initialize map once on mount - dynamic import to ensure client-side only
     useEffect(() => {
-      if (!mapContainerRef.current) return;
+      if (!mapContainerRef.current || mapRef.current) return;
 
-      const map = new maplibregl.Map({
-        container: mapContainerRef.current,
-        // Test: Use OpenFreeMap's pre-built style directly
-        style: 'https://tiles.openfreemap.org/styles/liberty/style.json',
-        center: [0, 30],
-        zoom: 1,
-        attributionControl: false,
-        // preserveDrawingBuffer is needed for html-to-image export
-        // @ts-expect-error - preserveDrawingBuffer exists at runtime but not in types
-        preserveDrawingBuffer: true,
-      });
+      let map: unknown = null;
 
-      map.on('click', (e) => {
-        onMapClickRef.current?.(e.lngLat.lat, e.lngLat.lng);
-      });
+      const initMap = async () => {
+        const maplibregl = (await import('maplibre-gl')).default;
 
-      mapRef.current = map;
+        if (!mapContainerRef.current) return;
+
+        map = new maplibregl.Map({
+          container: mapContainerRef.current,
+          style: 'https://tiles.openfreemap.org/styles/liberty/style.json',
+          center: [0, 30],
+          zoom: 1,
+          attributionControl: false,
+          // @ts-expect-error - preserveDrawingBuffer exists at runtime
+          preserveDrawingBuffer: true,
+        });
+
+        (map as maplibregl.Map).on('load', () => {
+          setMapLoaded(true);
+        });
+
+        (map as maplibregl.Map).on('click', (e: maplibregl.MapMouseEvent) => {
+          onMapClickRef.current?.(e.lngLat.lat, e.lngLat.lng);
+        });
+
+        mapRef.current = map;
+      };
+
+      initMap();
 
       return () => {
-        map.remove();
+        if (map && typeof (map as { remove?: () => void }).remove === 'function') {
+          (map as { remove: () => void }).remove();
+        }
         mapRef.current = null;
       };
     }, []);
 
     // Update map style when theme changes
     useEffect(() => {
-      if (mapRef.current && mapRef.current.isStyleLoaded()) {
-        mapRef.current.setStyle(createMapStyle(theme));
-      }
-    }, [themeId, theme]);
+      if (!mapLoaded || !mapRef.current) return;
+
+      const map = mapRef.current as { setStyle: (style: unknown) => void };
+      map.setStyle(createMapStyle(theme));
+    }, [themeId, theme, mapLoaded]);
 
     // Fly to location when it changes
     useEffect(() => {
-      if (mapRef.current && location) {
-        mapRef.current.flyTo({
-          center: [location.lng, location.lat],
-          zoom: 12,
-        });
-      }
+      if (!mapRef.current || !location) return;
+
+      const map = mapRef.current as { flyTo: (options: { center: [number, number]; zoom: number }) => void };
+      map.flyTo({
+        center: [location.lng, location.lat],
+        zoom: 12,
+      });
     }, [location?.lat, location?.lng]);
 
     const formatCoordinates = () => {
@@ -88,7 +104,11 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
 
     return (
       <div className={styles.container} ref={containerRef}>
-        <div ref={mapContainerRef} className={styles.map} />
+        <div
+          ref={mapContainerRef}
+          className={styles.map}
+          style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
+        />
         <div
           className={styles.gradientTop}
           style={{
