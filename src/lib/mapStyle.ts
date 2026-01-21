@@ -1,14 +1,17 @@
 import type { Theme } from './themes';
 import type { StyleSpecification } from 'maplibre-gl';
 
+// Base style URL - we'll modify it with our theme colors
+export const BASE_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty/style.json';
+
 export function createMapStyle(theme: Theme): StyleSpecification {
   return {
     version: 8,
     sources: {
-      osm: {
+      openmaptiles: {
         type: 'vector',
         tiles: ['https://tiles.openfreemap.org/planet/{z}/{x}/{y}.pbf'],
-        maxzoom: 14
+        maxzoom: 14,
       }
     },
     layers: [
@@ -20,14 +23,14 @@ export function createMapStyle(theme: Theme): StyleSpecification {
       {
         id: 'water',
         type: 'fill',
-        source: 'osm',
+        source: 'openmaptiles',
         'source-layer': 'water',
         paint: { 'fill-color': theme.water }
       },
       {
         id: 'landuse-park',
         type: 'fill',
-        source: 'osm',
+        source: 'openmaptiles',
         'source-layer': 'landuse',
         filter: ['in', 'class', 'park', 'grass'],
         paint: { 'fill-color': theme.parks }
@@ -35,7 +38,7 @@ export function createMapStyle(theme: Theme): StyleSpecification {
       {
         id: 'road-residential',
         type: 'line',
-        source: 'osm',
+        source: 'openmaptiles',
         'source-layer': 'transportation',
         filter: ['in', 'class', 'minor', 'service'],
         paint: {
@@ -46,7 +49,7 @@ export function createMapStyle(theme: Theme): StyleSpecification {
       {
         id: 'road-tertiary',
         type: 'line',
-        source: 'osm',
+        source: 'openmaptiles',
         'source-layer': 'transportation',
         filter: ['==', 'class', 'tertiary'],
         paint: {
@@ -57,7 +60,7 @@ export function createMapStyle(theme: Theme): StyleSpecification {
       {
         id: 'road-secondary',
         type: 'line',
-        source: 'osm',
+        source: 'openmaptiles',
         'source-layer': 'transportation',
         filter: ['==', 'class', 'secondary'],
         paint: {
@@ -68,7 +71,7 @@ export function createMapStyle(theme: Theme): StyleSpecification {
       {
         id: 'road-primary',
         type: 'line',
-        source: 'osm',
+        source: 'openmaptiles',
         'source-layer': 'transportation',
         filter: ['==', 'class', 'primary'],
         paint: {
@@ -79,7 +82,7 @@ export function createMapStyle(theme: Theme): StyleSpecification {
       {
         id: 'road-motorway',
         type: 'line',
-        source: 'osm',
+        source: 'openmaptiles',
         'source-layer': 'transportation',
         filter: ['in', 'class', 'motorway', 'trunk'],
         paint: {
