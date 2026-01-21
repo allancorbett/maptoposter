@@ -3,3 +3,7 @@ env/
 .env/
 .venv/
 .DS_Store
+
+# Generated poster files (example posters are tracked for documentation)
+posters/*.png
+posters/**/*.png
