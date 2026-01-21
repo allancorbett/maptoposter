@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { themes, type ThemeId } from '@/lib/themes';
@@ -23,19 +23,25 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
+    const onMapClickRef = useRef(onMapClick);
     const theme = themes[themeId];
+
+    // Keep callback ref updated
+    useEffect(() => {
+      onMapClickRef.current = onMapClick;
+    }, [onMapClick]);
 
     useImperativeHandle(ref, () => ({
       getContainer: () => containerRef.current,
     }));
 
-    // Initialize map
+    // Initialize map once on mount
     useEffect(() => {
-      if (!mapContainerRef.current || mapRef.current) return;
+      if (!mapContainerRef.current) return;
 
       const map = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: createMapStyle(theme),
+        style: createMapStyle(themes['noir']),
         center: [0, 30],
         zoom: 1,
         attributionControl: false,
@@ -45,9 +51,7 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
       });
 
       map.on('click', (e) => {
-        if (onMapClick) {
-          onMapClick(e.lngLat.lat, e.lngLat.lng);
-        }
+        onMapClickRef.current?.(e.lngLat.lat, e.lngLat.lng);
       });
 
       mapRef.current = map;
@@ -56,7 +60,7 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
         map.remove();
         mapRef.current = null;
       };
-    }, [theme, onMapClick]);
+    }, []);
 
     // Update map style when theme changes
     useEffect(() => {
