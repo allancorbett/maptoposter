@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { themes, type ThemeId } from '@/lib/themes';
 import { createMapStyle } from '@/lib/mapStyle';
 import type { Location } from '@/lib/types';
