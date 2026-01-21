@@ -40,7 +40,8 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
 
       const map = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: createMapStyle(themes['noir']),
+        // Test: Use OpenFreeMap's pre-built style directly
+        style: 'https://tiles.openfreemap.org/styles/liberty/style.json',
         center: [0, 30],
         zoom: 1,
         attributionControl: false,
@@ -63,7 +64,7 @@ export const MapPoster = forwardRef<MapPosterRef, MapPosterProps>(
 
     // Update map style when theme changes
     useEffect(() => {
-      if (mapRef.current) {
+      if (mapRef.current && mapRef.current.isStyleLoaded()) {
         mapRef.current.setStyle(createMapStyle(theme));
       }
     }, [themeId, theme]);
