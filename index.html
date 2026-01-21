@@ -536,7 +536,8 @@
                 sources: {
                     'osm': {
                         type: 'vector',
-                        url: 'https://tiles.stadiamaps.com/data/openmaptiles.json'
+                        tiles: ['https://tiles.openfreemap.org/planet/{z}/{x}/{y}.pbf'],
+                        maxzoom: 14
                     }
                 },
                 layers: [
